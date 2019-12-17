@@ -1,6 +1,3 @@
-'use strict';
-
-// load modules
 const express = require('express');
 const morgan = require('morgan');
 
@@ -13,7 +10,25 @@ const app = express();
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 
-// TODO setup your api routes here
+const sequelize = require('./models').sequelize;
+
+// Testing the database authentication
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Succesfully connected to db');
+  } catch (error) {
+    console.error('Error connecting to the db: ', error);
+  }
+})();
+
+// API routes are setup here
+const userRoutes = require('./routes/users.js');
+const courseRoutes = require('./routes/courses.js')
+
+app.use(express.json());
+app.use('/api', userRoutes);
+app.use('/api', courseRoutes);
 
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {
@@ -22,14 +37,14 @@ app.get('/', (req, res) => {
   });
 });
 
-// send 404 if no other route matched
+// Send 404 if no other route matched
 app.use((req, res) => {
   res.status(404).json({
     message: 'Route Not Found',
   });
 });
 
-// setup a global error handler
+// Setup a global error handler
 app.use((err, req, res, next) => {
   if (enableGlobalErrorLogging) {
     console.error(`Global error handler: ${JSON.stringify(err.stack)}`);
